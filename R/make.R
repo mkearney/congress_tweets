@@ -1,6 +1,26 @@
 
 ## toplevel (identifier) data
-cng_toplevel <- readr::read_csv("data/congress-toplevel.csv")
+library(readr)
+cols <- cols(
+  user_id = col_character(),
+  govtrack = col_character(),
+  title = col_character(),
+  short_title = col_character(),
+  first_name = col_character(),
+  middle_name = col_character(),
+  last_name = col_character(),
+  suffix = col_character(),
+  date_of_birth = col_date(format = ""),
+  gender = col_character(),
+  party = col_character(),
+  state = col_character()
+)
+
+cng_toplevel <- readr::read_csv("data/congress-toplevel.csv", col_types = cols)
+cng_toplevel <- dplyr::filter(cng_toplevel, !is.na(user_id))
+
+dun <- map_chr(tml[1:117], ~ .x$user_id[1])
+cng_toplevel <- filter(cng_toplevel, !user_id %in% dun)
 
 ## load rtweet
 library(rtweet)
@@ -18,9 +38,10 @@ for (i in seq_along(tml)) {
     if (s < 0) s <- 1
     message("Sleeping for ", round(s / 60, 1), " minutes ")
     Sys.sleep(s)
+    rl_reset <- Sys.time() + 60 * 15 + 10
   }
   tml[[i]] <- get_timeline(cng_toplevel$user_id[i], n = 3200)
-  cat(" +")
+  cat("+")
 }
 
 ## merge and save
@@ -35,6 +56,6 @@ saveRDS(tml, "/tmp/tml.rds")
 save_as_csv(tml, "/tmp/tml.csv")
 
 ## upload local tmp file to dropbox
-rdrop2::drop_upload("/tmp/tml.rds", "congress_tweets/init-tmls.rds")
-rdrop2::drop_upload("/tmp/tml.csv", "congress_tweets/init-tmls.csv")
+rdrop2::drop_upload("/tmp/tml.rds", "congress_tweets/init-tmls1.rds")
+rdrop2::drop_upload("/tmp/tml.csv", "congress_tweets/init-tmls1.csv")
 

@@ -9,7 +9,9 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+library(dplyr)
 source("R/dropbox-config.R")
+options(width = 100)
 ```
 # congress_tweets
 
@@ -27,8 +29,18 @@ link$url
 
 Read and preview the data
 
-```{r, eval = FALSE}
-## read and preview data
-data <- drop_read_rds("congress_tweets/init-tmls.rds")
-tibble::as_tibble(data)
+```{r}
+## read data
+data <- drop_read_rds("congress_tweets/tml1.rds")
+
+## preview data
+tibble::as_tibble(data) %>%
+  select(user_id:source)
+
+## number of tweets collected per user
+data %>% 
+  filter(!is.na(screen_name)) %>%
+  group_by(screen_name) %>%
+  summarise(n = n()) %>% 
+  print(n = 500)
 ```
