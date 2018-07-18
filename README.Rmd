@@ -14,6 +14,22 @@ knitr::opts_chunk$set(
 library(dplyr)
 source("R/dropbox-config.R")
 options(width = 100)
+library(readr)
+cols <- cols(
+  user_id = col_character(),
+  govtrack = col_character(),
+  title = col_character(),
+  short_title = col_character(),
+  first_name = col_character(),
+  middle_name = col_character(),
+  last_name = col_character(),
+  suffix = col_character(),
+  date_of_birth = col_date(format = ""),
+  gender = col_character(),
+  party = col_character(),
+  state = col_character()
+)
+cng_toplevel <- readr::read_csv("data/congress-toplevel.csv", col_types = cols)
 ```
 # congress_tweets
 
@@ -41,6 +57,17 @@ data %>%
   select(created_at:text) %>%
   mutate(text = gsub("\n", " ", text)) %>%
   head(10)
+```
+
+View top-level data about members of congress (with corresponding `user_id` variable)
+
+```{r, eval = FALSE}
+cng_toplevel <- readr::read_csv("data/congress-toplevel.csv")
+head(cng_toplevel, 10)
+```
+
+```{r, echo = FALSE}
+head(cng_toplevel, 10)
 ```
 
 View number of tweets collected per account

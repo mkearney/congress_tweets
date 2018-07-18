@@ -46,6 +46,31 @@ data %>%
 
 </div>
 
+View top-level data about members of congress (with corresponding
+`user_id` variable)
+
+``` r
+cng_toplevel <- readr::read_csv("data/congress-toplevel.csv")
+head(cng_toplevel, 10)
+```
+
+<div class="kable-table">
+
+| user\_id   | govtrack | title              | short\_title | first\_name | middle\_name | last\_name | suffix | date\_of\_birth | gender | party | state |
+| :--------- | :------- | :----------------- | :----------- | :---------- | :----------- | :--------- | :----- | :-------------- | :----- | :---- | :---- |
+| 3026622545 | 412664   | Delegate           | Del.         | Amata       | Coleman      | Radewagen  | NA     | 1947-12-29      | F      | R     | AS    |
+| 234128524  | 412428   | Senator, 3rd Class | Sen.         | Todd        | NA           | Young      | NA     | 1972-08-24      | M      | R     | IN    |
+| 2856787757 | 412667   | Senator, 2nd Class | Sen.         | Joni        | NA           | Ernst      | NA     | 1970-07-01      | F      | R     | IA    |
+| 2964174789 | 412668   | Senator, 2nd Class | Sen.         | Thom        | NA           | Tillis     | NA     | 1960-08-30      | M      | R     | NC    |
+| 252819642  | 412430   | Representative     | Rep.         | Kevin       | NA           | Yoder      | NA     | 1976-01-08      | M      | R     | KS    |
+| 384913290  | 412211   | Representative     | Rep.         | John        | NA           | Yarmuth    | NA     | 1947-11-04      | M      | D     | KY    |
+| 37007274   | 400440   | Representative     | Rep.         | Don         | NA           | Young      | NA     | 1933-06-09      | M      | R     | AK    |
+| 234469322  | 412402   | Representative     | Rep.         | Steve       | NA           | Womack     | NA     | 1957-02-18      | M      | R     | AR    |
+| 234014087  | 412412   | Representative     | Rep.         | Frederica   | NA           | Wilson     | NA     | 1942-11-05      | F      | D     | FL    |
+| 281540744  | 412410   | Representative     | Rep.         | Daniel      | NA           | Webster    | NA     | 1949-04-27      | M      | R     | FL    |
+
+</div>
+
 View number of tweets collected per account
 
 ``` r
