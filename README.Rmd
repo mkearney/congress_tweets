@@ -1,5 +1,7 @@
 ---
-output: github_document
+output: 
+  github_document:
+    df_print: kable
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
@@ -31,16 +33,21 @@ Read and preview the data
 
 ```{r}
 ## read data
-data <- drop_read_rds("congress_tweets/tml1.rds")
+data <- readRDS("~/Dropbox/congress_tweets/tml.rds")
 
 ## preview data
-tibble::as_tibble(data) %>%
-  select(user_id:source)
+data %>%
+  arrange(desc(created_at)) %>%
+  select(user_id:text) %>%
+  mutate(text = gsub("\n", " ", text)) %>%
+  head(10)
+```
 
+View number of tweets collected per account
+
+```{r}
 ## number of tweets collected per user
 data %>% 
-  filter(!is.na(screen_name)) %>%
   group_by(screen_name) %>%
-  summarise(n = n()) %>% 
-  print(n = 500)
+  summarise(n = n())
 ```

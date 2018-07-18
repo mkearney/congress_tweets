@@ -19,9 +19,6 @@ cols <- cols(
 cng_toplevel <- readr::read_csv("data/congress-toplevel.csv", col_types = cols)
 cng_toplevel <- dplyr::filter(cng_toplevel, !is.na(user_id))
 
-dun <- map_chr(tml[1:117], ~ .x$user_id[1])
-cng_toplevel <- filter(cng_toplevel, !user_id %in% dun)
-
 ## load rtweet
 library(rtweet)
 
@@ -56,6 +53,5 @@ saveRDS(tml, "/tmp/tml.rds")
 save_as_csv(tml, "/tmp/tml.csv")
 
 ## upload local tmp file to dropbox
-rdrop2::drop_upload("/tmp/tml.rds", "congress_tweets/init-tmls1.rds")
-rdrop2::drop_upload("/tmp/tml.csv", "congress_tweets/init-tmls1.csv")
-
+rdrop2::drop_upload("/tmp/tml.rds", "congress_tweets")
+rdrop2::drop_upload("/tmp/tml.csv", "congress_tweets")
