@@ -38,7 +38,7 @@ data <- readRDS("~/Dropbox/congress_tweets/tml.rds")
 ## preview data
 data %>%
   arrange(desc(created_at)) %>%
-  select(user_id:text) %>%
+  select(created_at:text) %>%
   mutate(text = gsub("\n", " ", text)) %>%
   head(10)
 ```
