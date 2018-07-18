@@ -71,6 +71,14 @@ head(cng_toplevel, 10)
 
 </div>
 
+Compare sentiment of tweets before and after Nov 2016
+
+<p style="align:center">
+
+<img src='tools/readme/sent-prepost.png' />
+
+</p>
+
 View number of tweets collected per account
 
 ``` r
