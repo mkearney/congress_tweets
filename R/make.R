@@ -19,6 +19,13 @@ cols <- cols(
 cng_toplevel <- readr::read_csv("data/congress-toplevel.csv", col_types = cols)
 cng_toplevel <- dplyr::filter(cng_toplevel, !is.na(user_id))
 
+
+
+## load and auto-insert dropbox token
+token <- readRDS("~/Dropbox/.r2drop.rds")
+assign("token", token, envir = rdrop2:::.dstate)
+o <- rdrop2::drop_download("congress_tweets/tml.rds")
+
 ## load rtweet
 library(rtweet)
 
@@ -43,10 +50,6 @@ for (i in seq_along(tml)) {
 
 ## merge and save
 tml <- dplyr::bind_rows(tml)
-
-## load and auto-insert dropbox token
-token <- readRDS("~/Dropbox/.r2drop.rds")
-assign("token", token, envir = rdrop2:::.dstate)
 
 ## save temporary local file
 saveRDS(tml, "/tmp/tml.rds")
