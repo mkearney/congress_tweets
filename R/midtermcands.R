@@ -1,39 +1,86 @@
+## load packages
 library(mwk)
 library(rtweet)
 
+## nytimes' politics list
 mc <- lists_members(owner_user = "nytpolitics", slug = "midterm-2018-candidates")
-uids <- readRDS("data/uids.rds")
-uids <- lookup_users(uids)
-y <- !duplicated(c(uids$user_id, mc$user_id))
-mc <- c(uids$screen_name, mc$screen_name)[y]
 
+## read all user IDs
+uids <- readRDS("data/uids.rds")
+
+## unique midterm candidate IDs
+mc <- unique(c(uids, mc$user_id))
+
+## initialize new data object
 d2 <- vector("list", length(mc))
 
-d <- readRDS("data/midterm-candidate-tweets.rds")
-pre <- nrow(d)
-newest <- as.character(as.Date(sort(d$created_at, decreasing = TRUE)[1]))
-ctr <- 0
+## read in data
+d <- readRDS("data/midterm-candidate-tweets-ids.rds")
 
+## arrange by timestamp, select ID columns, and filter first obs for each user
+d <- d %>%
+  arrange(desc(created_at)) %>%
+  select(user_id, status_id) %>%
+  filter(!duplicated(user_id))
+
+## initialize counters
+ctr <- 0
+j <- 1
+
+## counter
 nrow100 <- function(x) {
   ceiling(NROW(x) / 100) * 100
 }
 
+
+## the for loop
 for (i in seq_along(d2)) {
-  since_id <- filter(d, user_id == mc[i]) %>%
-    arrange(desc(created_at)) %>%
-    pull(status_id) %>%
-    .[1]
+  ## get since_id param
+  since_id <- d %>%
+    filter(user_id == mc[i]) %>%
+    pull(status_id)
+
+  ## coerce since_id to appropriate value/length
+  if (length(since_id) == 0) {
+    since_id <- NULL
+  }
+  since_id <- since_id[1]
+
+  ## get tweets from timeline since most recent previously collected tweet
   d2[[i]] <- get_timeline(mc[i], n = 3200,
     since_id = since_id,
     token = bearer_token())
+
+  ## update message
+  cat(paste0(i, ", "))
+
+  ## if final iteration, skip counter updates
   if (i == length(d2)) break
-  ctr <- nrow100(d[[i]]) + ctr
-  if (ctr > (900 * 90)) Sys.sleep(60 * 15)
+
+  ## update rate-limit counter
+  ctr <- nrow100(d2[[i]]) + ctr
+
+  ## update global counter
+  if (ctr > (180 * 100 * j)) {
+    message("\nsleeping for rate-limit cooldown...")
+    Sys.sleep(60 * 15)
+    j <- j + 1
+  }
 }
 
+## collapse into single df
 d2 <- dplyr::bind_rows(d2)
-d <- bind_rows(d2, d)
 
-if (nrow(d) > pre) {
-  saveRDS(d, "data/midterm-candidate-tweets.rds")
-}
+## save data
+save_as <- paste0("midterm-candidate-tweets-", Sys.Date(), ".rds")
+saveRDS(d2, file.path("data", save_as))
+
+## arrange by timestamp, select ID columns, bind with d, and filter first obs
+d <- d2 %>%
+  arrange(desc(created_at)) %>%
+  select(user_id, status_id) %>%
+  bind_rows(d) %>%
+  filter(!duplicated(user_id))
+
+## save ids data
+saveRDS(d, "data/midterm-candidate-tweets-ids.rds")
