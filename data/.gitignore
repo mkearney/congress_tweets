@@ -3,3 +3,4 @@ dem_candidates.csv
 rep_candidates.csv
 *.rds
 candidates_2018_0921.csv
+*.fst

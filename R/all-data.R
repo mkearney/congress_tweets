@@ -16,31 +16,71 @@ library(kmw)
 )
 ## bind rows
 .d <- bind_rows_data(.d0, .d1, .d2, .d3, fill = FALSE)
-rm(.d0, .d1, .d2, .d3)
 
-## filter out everyhing after the election
+## cleanup memory
+rm(.d0, .d1, .d2, .d3)
+gc()
+
+## filter only tweets from year leading up to the election
 .d <- .d %>%
-  filter_data(created_at < as.POSIXct("2018-11-08 00:00:00", tz = "UTC"))
+  dplyr::filter(created_at < as.POSIXct("2018-11-08 00:00:00", tz = "UTC"),
+    created_at >= as.POSIXct("2017-11-01 00:00:00", tz = "UTC"))
 
 ## remove duplicates
 .d <- dplyr::filter(.d, !duplicated(status_id))
-
-## only tweets from last year
-.d <- .d %>%
-  dplyr::filter(created_at >= as.POSIXct("2017-11-01 00:00:00", tz = "UTC"))
 
 ## plot time series
 .d %>%
   rtweet::ts_plot("weeks", trim = 1, size = 1) +
   theme_mwk(base_size = 18) -> p
-
 p + ggplot2::labs(
   title = "Weekly tweet counts for all candidates in the 2018 midterms",
   x = NULL, y = NULL) +
   ggplot2::ylim(0, 25000)
 
+## view data
 .d
 
+## create lat/lng variables
+.d <- rtweet::lat_lng(.d)
+
+## drop old coord variables
+.d <- .d[grep("coord", names(.d), invert = TRUE)]
+
+## flatten data
+ssp <- function(x) UseMethod("ssp")
+ssp.default <- function(x) {
+  x <- as.character(x)
+  ssp(x)
+}
+ssp.character <- function(x) {
+  x[is.na(x)] <- ""
+  paste(x, collapse = " ")
+}
+ssp.list <- function(x) {
+  x <- dapr::vap_chr(x, ssp)
+  x[x == ""] <- NA_character_
+  x
+}
+ssp.data.frame <- function(x) {
+  y <- dapr::vap_lgl(x, ~ is.list(.x) && is.character(.x[[1]]))
+  x[y] <- dapr::lap(x[y], ssp)
+  x
+}
+
+## apply ssp
+.d <- ssp(.d)
+.d <- dplyr::arrange(.d, created_at)
+
+## drop these columns to make smaller
+.s <- .d[grep("rtweet_text|status_url|hashtags|symbols|mentions_|media_|urls_",
+  names(.d), invert = TRUE)]
+
+## save flat tweets
+save_RDS(.s, "data/tweets-2017-2018-flat-small.rds")
+fst::write_fst(.s, "data/tweets-2017-2018-flat-small.fst")
+
+##
 p <- readr::read_csv("data/candidates_2018_0921.csv")
 p <- p %>%
   as_tbl_data() %>%

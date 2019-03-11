@@ -30,8 +30,6 @@ cngids <- httr::content(legs, as = "text", encoding = "UTF-8") %>%
   select(thomas, govtrack, screen_name = twitter, user_id = twitter_id)
 
 
-
-
 cngids$screen_name[cngids$govtrack == "412438" & !is.na(cngids$govtrack)] <- "justinamash"
 cngids$user_id[cngids$govtrack == "412438" & !is.na(cngids$govtrack)] <- "233842454"
 cngids$screen_name[cngids$screen_name == "reppeteaguilar" & !is.na(cngids$screen_name)] <- "RepPeteAguilar"
