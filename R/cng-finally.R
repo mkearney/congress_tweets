@@ -20,24 +20,112 @@ s15 <- get_cong_data(115, "senate")
 library(dplyr)
 
 cng <- dplyr::bind_rows(h14, h15, s14, s15)
+rm(h14, h15, s14, s15)
+
+## filter out 114th congress entries if matching 115th exists
+cng %>%
+  arrange(desc(congress)) %>%
+  mutate(drop = duplicated(id) & duplicated(last_name)) %>%
+  filter(drop) %>%
+  ## drop these vars
+  select(-drop, -congress, -state_rank, -senate_class,
+    -votes_with_party_pct, -missed_votes_pct, -geoid,
+    -phone, -fax, -last_updated, -total_present,
+    -missed_votes, -ideal_point, -seniority,
+    -next_election, -total_votes, -contact_form, -in_office,
+    -leadership_role) -> cng
 
 
-r <- readr::read_csv("/Users/kearneymw/Downloads/Untitled spreadsheet - Sheet1.csv")
 
 
+paste_fml <- function(f, m, l) {
+  m <- ifelse(is.na(m), "", paste0(m, " "))
+  f[is.na(f)] <- ""
+  l[is.na(l)] <- ""
+  fml <- paste0(f, " ", m, l)
+  fml[fml == " "] <- NA_character_
+  fml
+}
 
-tfse::pbcopy(paste(cng$twitter_account[1:20], collapse = " "))
+
+cng$full_name <- paste_fml(cng$first_name, cng$middle_name, cng$last_name)
+
+save_RDS(cng, "data/cng-data.rds")
 
 
+name_chars <- function(x) {
+  x <- tolower(x)
+  strsplit(x, "(?<=\\w{3})|\\s", perl = TRUE) %>%
+    dapr::lap( ~ .x[nchar(.x) > 2])
+}
 
 cands <- readr::read_csv("data/candidates_2018_0921.csv")
 
-grep("id$", names(r), value = TRUE)
+cng_ <- cng
+cands %>%
+  filter(!fec_candidate_id %in% cng$fec_candidate_id) %>%
+  rename(full_name = clean_name) %>%
+  .[names(.) %in% names(cng)] %>%
+  mutate(full_name = sub('"[^"]+"', "", full_name),
+    party = case_when(
+      party == "dem" ~ "D",
+      party == "rep" ~ "R",
+      TRUE ~ "I"
+  )) %>%
+  bind_rows(cng, .) -> cng
 
-x <- cands$clean_name
+#nc <- name_chars(paste_fml(cng$first_name, cng$middle_name, cng$last_name))
+nc <- name_chars(cng$full_name)
 
-gsub("(?>[ ])[A-Z]\\.(?=[ ])", "", x, perl = TRUE)
+lvs <- unique(tfse::na_omit(unlist(nc)))
 
+not_na <- !vap_lgl(nc, ~ is.na(.x[1]))
+i <- dapr::lap(nc[not_na], ~ as.integer(factor(.x, levels = lvs)))
+
+make_mat <- function(n) {
+  m <- matrix(rep(0L, length(lvs)), nrow = 1)
+  for (i in n) {
+    m[1, i] <- 1L
+  }
+  as.integer(m[1, ])
+}
+
+
+ir <- lap(i, make_mat)
+
+cng_nms <- paste_fml(cng$first_name, cng$middle_name, cng$last_name)[not_na]
+cng_nms <- cng$full_name
+
+cng <- cng %>%
+  arrange(is.na(api_uri)) %>%
+  filter(!duplicated(full_name))
+
+
+find_nm <- function(nm) {
+  nc <- name_chars(nm)
+  i <- as.integer(factor(unlist(nc), levels = lvs))
+  i <- make_mat(i)
+  r <- dapr::vap_dbl(ir, function(.x) cor(i, .x))
+  cng_nms[which.max(r)]
+}
+
+rs <- sample(seq_len(nrow(cng)), 100)
+g <- vap_chr(paste(cng$first_name, cng$last_name)[rs],
+  find_nm)
+
+sum(g == cng$full_name[rs])
+
+nfn <- sub(" .*", "", cng$full_name)
+nln <- gsub(".* ", "", gsub(" [A-Z][a-z]\\.?$| I+$", "", cng$full_name))
+cng$first_name[is.na(cng$first_name)] <- nfn[is.na(cng$first_name)]
+cng$last_name[is.na(cng$last_name)] <- nln[is.na(cng$last_name)]
+
+
+save_RDS(cng, "data/cng-data.rds")
+save(cng = cng,
+  cng_nms = cng_nms,
+  ir = ir,
+  lvs = lvs, file = "data/cng-list.rda")
 
 full_nm_id <- function(x) {
   if ("clean_name" %in% names(x)) {
@@ -119,16 +207,16 @@ full_nm_id <- function(x) {
 
 
 
-
-cands$mu_id <- full_nm_id(cands)
-
-cng$mu_id <- full_nm_id(cng)
-
-tfse::n_uq(cng$mu_id)
-tfse::n_uq(cands$mu_id)
-
-cng$district
-cands$district
+#
+# cands$mu_id <- full_nm_id(cands)
+#
+# cng$mu_id <- full_nm_id(cng)
+#
+# tfse::n_uq(cng$mu_id)
+# tfse::n_uq(cands$mu_id)
+#
+# cng$district
+# cands$district
 
 
 any_dup <- function(x) duplicated(x) | duplicated(x, fromLast = TRUE)
