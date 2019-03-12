@@ -1,0 +1,13 @@
+d <- .d[grep("^\\.|media_[^c]|urls_[^u]|symbols|mentions_[^c]|_description|_location|coords", #
+	names(.d), invert = TRUE)]
+object.size(.d)
+d <- .d[grep("^\\.|media_[^c]|urls_[^u]|symbols|mentions_[^c]|_description|_location|coords|retweet_text|retweet_created|quoted_created", #
+	names(.d), invert = TRUE)]
+sapply(d, object.size)
+d <- .d[grep("^\\.|media_[^c]|urls_[^u]|symbols|mentions_[^c]|_description|_location|coords|retweet_text|retweet_created|quoted_created|hashtags|status_url|^urls_url$|_source", #
+	names(.d), invert = TRUE)]
+object.size(d)
+sort(sapply(d, object.size))
+object.size(d)/object.size(.d)
+as.numeric(object.size(d))/as.numeric(object.size(.d))
+saveRDS(d, "~/Desktop/midterm-tweets-smaller-expanded-urls.rds")

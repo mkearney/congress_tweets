@@ -80,6 +80,9 @@ ssp.data.frame <- function(x) {
 save_RDS(.s, "data/tweets-2017-2018-flat-small.rds")
 fst::write_fst(.s, "data/tweets-2017-2018-flat-small.fst")
 
+
+#.s <- fst::read_fst("data/tweets-2017-2018-flat-small.fst")
+
 ##
 p <- readr::read_csv("data/candidates_2018_0921.csv")
 p <- p %>%

@@ -20,9 +20,10 @@ library(dplyr)
 
 cng <- dplyr::bind_rows(h14, h15, s14, s15)
 
-<<<<<<< HEAD
+library(tfse)
 save_RDS(cng, "data/congress-114-115.rds")
 
+.s <- fst::read_fst("data/tweets-2017-2018-flat-small.fst")
 
 fn <- paste(cng$first_name, cng$last_name)
 tn <- .s$name[!duplicated(.s$name)]
@@ -30,35 +31,26 @@ sum(tn %in% fn)
 sum(fn %in% tn)
 
 cng$sn2 <- .s$screen_name[!duplicated(.s$name)][match(tolower(fn), tolower(tn))]
-select_data(cng, first_name, last_name, twitter_account, sn2)
-
-library(dplyr)
-
-cng %>%
-  select(first_name, last_name, sn1 = twitter_account, sn2) %>%
-  dplyr::mutate(
-    sn = case_when(
-      is.na(sn1) ~ sn2,
-      TRUE ~ sn1
-    )
-  ) %>%
-  pull(sn) %>%
-  is.na() %>%
-  which() ->stillmissing
 
 
-
-
-
+# cng %>%
+#   select(first_name, last_name, sn1 = twitter_account, sn2) %>%
+#   dplyr::mutate(
+#     sn = case_when(
+#       is.na(sn1) ~ sn2,
+#       TRUE ~ sn1
+#     )
+#   ) %>%
+#   pull(sn) %>%
+#   is.na() %>%
+#   which() -> stillmissing
+#
 
 fn <- paste(cng$first_name, cng$last_name)
 tn <- .s$name
 
 .s$sn2 <- cng$twitter_account[!duplicated(fn)][match(tolower(tn), tolower(fn))]
 
-select_data(.s, name, screen_name, sn2)
-
-library(dplyr)
 
 c1 <- cng %>%
   select(id, sn2 = twitter_account) %>%
@@ -92,50 +84,12 @@ rbind(filter(ids, !is.na(sn2)) %>%
   unique()) %>%
   arrange(id) -> ids
 
-ids
-
 nac <- rtweet::lookup_users(tolower(ids$screen_name[is.na(ids$user_id)]))
 
 ids$user_id[is.na(ids$user_id)] <- nac$user_id[match(tolower(ids$screen_name[is.na(ids$user_id)]), tolower(nac$screen_name))]
 
-
-filter(ids, id == "T000475")
-
 ids <- filter(ids, !duplicated(tolower(screen_name)))
 
-
-ids %>%
-  group_by(id) %>%
-  summarise(n = n()) %>%
-  arrange(decr(n))
-ids
-
-.s %>%
-  select(name, sn1 = screen_name, sn2) %>%
-  unique() %>%
-  dplyr::mutate(
-    sn = case_when(
-      is.na(sn1) ~ sn2,
-      TRUE ~ sn1
-    )
-  ) %>%
-  pull(sn) %>%
-  is.na() %>%
-  which() ->stillmissing
-
-
-=======
-sn2id <- function(x) {
-  dapr::vap_chr(x, ~ {
-    if (is.na(.x)) return(NA_character_)
-    tw <- rtweet::lookup_users(.x, parse = FALSE)
-    tw <- tw[["user_id"]]
-    if (length(tw) == 0) {
-      return(NA_character_)
-    }
-    return(tw[1])
-  })
-}
 
 cng %>%
   arrange(desc(congress)) %>%
@@ -151,7 +105,6 @@ cng %>%
     full_m = paste(first, middle, last)) %>%
   filter(!duplicated(id)) -> g
 
-
 u <- rtweet::lookup_users(tfse::na_omit(g$screen_name), token = rtweet::bearer_token())
 g$user_id <- u$user_id[match(tolower(g$screen_name), tolower(u$screen_name))]
 
@@ -163,7 +116,21 @@ g <- select(g, id, user_id, screen_name:full_m)
 tfse::save_RDS(g, "data/congress-ids-114-115.rds")
 
 
-sn2 <- d$screen_name[match(tolower(g$full), tolower(d$name))]
+
+tfse::save_RDS(g, "data/congress-ids-114-115.rds")
+
+
+library(tfse)
+library(dplyr)
+
+g <- tfse::read_RDS("data/congress-ids-114-115.rds")
+.s <-  tibble::as_tibble(fst::read_fst("data/tweets-2017-2018-flat-small.fst"))
+#.s <- tfse::read_RDS("data/tweets-2017-2018-flat-small.rds")
+
+cng <- tfse::read_RDS("data/congress-114-115.rds")
+
+
+sn2 <- .s$screen_name[match(tolower(g$full), tolower(.s$name))]
 sn2 <- tolower(sn2)
 
 g$screen_name2 <- sn2
@@ -171,8 +138,6 @@ g$screen_name2 <- sn2
 g <- mutate(g,
   screen_name2 = ifelse(screen_name == screen_name2, NA_character_, screen_name2)
 )
-
-unique(d$description)[grep("Adam Schiff", unique(d$description), ignore.case = TRUE)]
 
 f <- function(x) {
   x$description <- gsub("(vs|unsea\\S+|against|challeng\\S+|oppos\\S+).{5,20}\\s",
@@ -194,7 +159,7 @@ f <- function(x) {
     id = g$id[i])
   unique(x)
 }
-ud <- select(filter(d, !duplicated(user_id)), user_id, screen_name, description)
+ud <- select(filter(.s, !duplicated(user_id)), user_id, screen_name, description)
 
 udo <- dapr::lap(ud$user_id, ~ f(dplyr::filter(ud, user_id == .x)))
 udo <- dplyr::bind_rows(udo)
@@ -217,7 +182,7 @@ u <- rtweet::lookup_users(idlong$screen_name)
 
 idlong$user_id <- u$user_id[match(idlong$screen_name, tolower(u$screen_name))]
 
-did <- d$user_id[match(idlong$screen_name, tolower(d$screen_name))]
+did <- .s$user_id[match(idlong$screen_name, tolower(.s$screen_name))]
 
 idlong$user_id[is.na(idlong$user_id)] <- did[is.na(idlong$user_id)]
 
@@ -233,44 +198,160 @@ idwide <- idlong %>%
   print(n = 25)
 
 
-ls(all.names = TRUE)
-
-sum(is.na(idlong$user_id))
-
-
-
-dud <- unique(select(d, user_id))
+dud <- unique(select(.s, user_id))
 ids <- idlong$id[match(dud$user_id, idlong$user_id)]
 
 dud$id <- ids
 
-d <- left_join(d, dud)
+d <- left_join(.s, dud)
 dd <- left_join(d, filter(select(cng, id, party, date_of_birth, gender, state,
   chamber), !duplicated(id)))
 
 
+filter(dd, is.na(party)) %>%
+  pull(screen_name) %>%
+  unique() -> unna
+
+unna[1]
+
+cng$first_name[grep("Peterson", cng$last_name)]
+
+cng <- filter(cng, !duplicated(id))
+
+cands <- readr::read_csv("data/candidates_2018_0921.csv")
+
+
+g$crp_id <- cng$crp_id[match(g$id, cng$id)]
+cands$id <- cng$id[match(cands$crp_id, g$crp_id)]
+
+nacands <- cands#filter(cands, is.na(id))
+nad <- filter(dd, is.na(id)) %>%
+  select(user_id, screen_name, name, description) %>%
+  filter(!duplicated(user_id))
+
+
+nad$crp_id <- nacands$crp_id[match(tolower(nad$name), tolower(nacands$clean_name))]
+lns <- sub(",.*", "", tolower(nacands$name))
+
+
+
+nad$crp_id2 <- dapr::vap_chr(tokenizers::tokenize_words(nad$name), function(.n) {
+  i <- which(.n %in% lns)
+  if (length(i) == 0) return(NA_character_)
+  nacands$crp_id[i[1]]
+})
+
+
+cng <- filter(cng, !duplicated(id))
+
+uud <- select(d, screen_name, user_id) %>% distinct()
+
+
+cng$user_id <- uud$user_id[match(tolower(cng$twitter_account), tolower(uud$screen_name))]
+
+nnnnn <- rtweet::lookup_users(cng$twitter_account[is.na(cng$user_id) & !is.na(cng$twitter_account)])
+
+w <- which(is.na(cng$user_id) & !is.na(cng$twitter_account))
+
+cng$user_id[w] <- nnnnn$user_id[match(tolower(cng$twitter_account[w]), tolower(nnnnn$screen_name))]
+
+
+
+cng$screen_name <- tolower(cng$twitter_account)
+readr::write_csv(cng, "data/candidate-spreadsheet.csv")
+
+
+
+grep('fletch', g$full, value = TRUE, ignore.case = TRUE)
+
+select(dd, user_id, screen_name, id) %>%
+  filter(!is.na(id)) %>%
+  mutate(screen_name = tolower(screen_name)) %>%
+  distinct() %>%
+  filter(!user_id %in% cng$user_id) %>%
+  arrange(id) %>%
+  group_by(id) %>%
+  mutate(n = paste0("screen_name", 1 + seq_len(n()))) %>%
+  ungroup() %>%
+  tidyr::spread(n, screen_name) %>%
+  arrange(id)
+
+
+nad$crp_id <- ifelse(is.na(nad$crp_id), nad$crp_id2, nad$crp_id)
+
+nad[is.na(nad$crp_id), ]
+
+grep("governor|gub", nad$description, ignore.case = TRUE, value = TRUE)
+
+
+congids <- tfse::read_RDS("data/congress-ids.rds")
+
+nad$user_id %in% congids$user_id
+
+
+sort(lns)
+
+cands[lns == "whitmire", ] %>%
+  as.data.frame()
+
+grep("Whitmer", lns)
+
+cands$crp_id[match(g$full, cands$clean_name)]
+
+sum(is.na(match(g$full, cands$clean_name)))
+sum(is.na(match(tolower(g$full), tolower(cands$clean_name))))
+
+filter(cands, is.na(id)) %>%
+
+
+
+sum(cng$id %in% cands$google_entity_id)
+
+cands$fec_candidate_id
+sum(cng$id %in% cands$fec_candidate_id)
+
+unique(dd$party[grep("Peterson", dd$name)])
+
+sum(tolower(unna) %in% unique(tolower(dd$screen_name)[!is.na(dd$party)]))
+
 s <- dd %>%
   mutate(trump = stringr::str_count(tolower(text), "trump"),
-    is_retweet = as.integer(is_retweet),
-    mentions = stringr::str_count(text, "@\\S+"),
-    is_quote = as.integer(is_quote),
-    links = stringr::str_count(text, "https?://\\S+")) %>%
+    hashtags = stringr::str_count(text, "(?!<\\S)#\\S+"),
+    is_reply = !is.na(reply_to_status_id),
+    mentions = stringr::str_count(text, "(?!<\\S)@\\S+") - as.integer(is_reply),
+    links = stringr::str_count(text, "https?://\\S+") - as.integer(is_retweet) - as.integer(is_quote)) %>%
   group_by(user_id) %>%
-  mutate(n = n()) %>%
-  summarise_if(is.numeric, mean, na.rm = TRUE) %>%
-  ungroup() %>%
-  left_join(select(filter(dd, !duplicated(user_id)), user_id, party)) %>%
+  summarise(
+    party = party[1],
+    is_retweet = mean(as.integer(is_retweet), na.rm = TRUE),
+    is_quote = mean(as.integer(is_quote), na.rm = TRUE),
+    is_reply = mean(as.integer(is_reply), na.rm = TRUE),
+    tweets = n(),
+    trump = mean(trump, na.rm = TRUE),
+    hashtags = mean(hashtags, na.rm = TRUE),
+    mentions = mean(mentions, na.rm = TRUE),
+    links = mean(links, na.rm = TRUE)
+  ) %>%
   group_by(party) %>%
-  summarise_if(is.numeric, mean, na.rm = TRUE) %>%
+  summarise(
+    candidates = n(),
+    is_retweet = mean(is_retweet, na.rm = TRUE),
+    is_quote = mean(is_quote, na.rm = TRUE),
+    is_reply = mean(is_reply, na.rm = TRUE),
+    tweets = mean(tweets, na.rm = TRUE),
+    trump = mean(trump, na.rm = TRUE),
+    hashtags = mean(hashtags, na.rm = TRUE),
+    mentions = mean(mentions, na.rm = TRUE),
+    links = mean(links, na.rm = TRUE)
+  ) %>%
   tidyr::gather(var, val, -party) %>%
   tidyr::spread(party, val, fill = 0) %>%
-  .[c(1, 2, 4)] %>%
   mutate(DR = D/R) %>%
   arrange(desc(DR)) %>%
-  filter(!grepl("^retweet|^quote", var)) %>%
   print(n = 100)
 
-filter(s, !grepl("lat|lng|^n$|_count", var))
+select(s, var, D, R, DR)
+
 
 dd %>%
   group_by(party) %>%
@@ -293,30 +374,30 @@ sum(is.na(dd$user_id))
 nrow(d)
 cng
 
-uuu <- tolower(unique(d$screen_name[is.na(ids)]))
+uuu <- tolower(unique(.s$screen_name[is.na(ids)]))
 
 
-filter(d, user_id == "1135486501") %>%
+filter(.s, user_id == "1135486501") %>%
   select(user_id, screen_name)
 
 
 
-filter(d, tolower(screen_name) == "repscottpeters") %>%
+filter(.s, tolower(screen_name) == "repscottpeters") %>%
   pull(user_id) %>%
   unique()
 
 idlong[idlong$user_id == "1135486501", ]
 
-dapr::vap_lgl(tolower(g$full), ~ any(grepl(.x, unique(tolower(d$description)))))
+dapr::vap_lgl(tolower(g$full), ~ any(grepl(.x, unique(tolower(.s$description)))))
 
 Map(grepl, tolower(g$full))
 
 
-d$screen_name[match(tolower(g$full_m),
-  tolower(d$description))]
+.s$screen_name[match(tolower(g$full_m),
+  tolower(.s$description))]
 
-sn3 <- d$screen_name[match(tolower(g$full_m),
-  tolower(d$description))]
+sn3 <- .s$screen_name[match(tolower(g$full_m),
+  tolower(.s$description))]
 sn3 <- tolower(sn3)
 
 g$screen_name3 <- sn3
@@ -332,8 +413,8 @@ g$screen_name3 <- NULL
 
 res <- GC()
 res
-sum(tolower(unique(d$screen_name)) %in%
-  unique(tfse::na_omit(c(g$screen_name, g$screen_name2))))/tfse::n_uq(tolower(d$screen_name))
+sum(tolower(unique(.s$screen_name)) %in%
+  unique(tfse::na_omit(c(g$screen_name, g$screen_name2))))/tfse::n_uq(tolower(.s$screen_name))
 
 
 g
@@ -344,4 +425,3 @@ function(x) {
 
 
 tfse::nin(unique(sn2), g$screen_name)
->>>>>>> f7e7171e8ebe861f50d8f236e0e85bcc90a43ea0
