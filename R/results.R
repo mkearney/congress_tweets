@@ -55,12 +55,12 @@ fcasts <- rbind(select(fcasta[[1]]$races, race_id,
 results <- left_join(results, fcasts)
 
 ## races, cands, forecasts
-save_RDS(races, "../data/races.rds")
-save_RDS(cands, "../data/cands.rds")
-save_RDS(fcasts, "../data/fcasts.rds")
+save_RDS(races, "data/races.rds")
+save_RDS(cands, "data/cands.rds")
+save_RDS(fcasts, "data/fcasts.rds")
 
 ## results (joined: races, cands, fcasts)
-save_RDS(results, "../data/results.rds")
+save_RDS(results, "data/results.rds")
 
 ## vote shares of two major parties + third party
 select(results, race_id, percent, party_id) %>%

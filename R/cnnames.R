@@ -1,6 +1,70 @@
+library(dplyr)
+
+r <- readRDS("data/results.rds")
+
+any_dup <- function(x) duplicated(x) | duplicated(x, fromLast = TRUE)
+
+
+
+r <- filter(r, !first_name == "" & !last_name == "",
+  !(candidate_id %in% c("tyler-64243", "ericson-1158") & is.na(rating)))
+
+r <- filter(r, race_type != "governor")
+
+cng <- readRDS("data/congress-114-115.rds")
+
+r <- r %>%
+  mutate(first_last = tolower(paste(first_name, last_name)),
+    first_last2 = tolower(paste(sub(" .*", "", first_name), last_name)))
+
+
+cng <- mutate(cng, f = paste0(state, district)) %>%
+  mutate(middle_name = ifelse(is.na(middle_name), " ", paste0(" ", middle_name, " ")),
+    full_name = tolower(paste0(first_name, middle_name, last_name)),
+    first_last = tolower(paste(first_name, last_name))) %>%
+  arrange(desc(congress)) %>%
+  filter(!duplicated(full_name))
+
+cng %>%
+  transmute(middle_name = ifelse(is.na(middle_name), " ", paste0(" ", middle_name, " ")),
+    full_name = tolower(paste0(first_name, middle_name, last_name)),
+    first_last = tolower(paste(first_name, last_name)),
+    m1 = match(full_name, tolower(r$name_display)),
+    m2 = match(first_last, tolower(r$name_display)),
+    m3 = match(full_name, tolower(r$first_last)),
+    m4 = match(first_last, tolower(r$first_last)),
+    m5 = match(full_name, tolower(r$first_last2)),
+    m6 = match(first_last, tolower(r$first_last2)),
+    m = ifelse(is.na(m1), m2, m1),
+    m = ifelse(is.na(m), m3, m),
+    m = ifelse(is.na(m), m4, m),
+    m = ifelse(is.na(m), m5, m),
+    m = ifelse(is.na(m), m6, m)) %>%
+  pull(m) -> m
+
+
+r[grep("murkowski", r$last_name), ]
+
+cng[grep("Ashford", cng$last_name), ]
+cng$district
+
+
+na <- filter(cng, is.na(m)) %>% select(state, district)
+
+  select(full_name, f) %>%
+  arrange(f)
+
+filter(cng, state == na$state & disrict == na$district)
+
+filter(cng, f %in% paste0(na$state, na$district)) %>%
+  arrange(f) %>%
+  select(full_name, f)
 
 
 library(tfse)
+
+r$first_
+
 
 gt <- function(x) {
   gt_ <- function(x) {
@@ -29,7 +93,7 @@ library(tfse)
 
 cng_ <- read_RDS("~/R/congress_tweets/data/cng-data.rds")
 
-cng <- read_RDS("/tmp/cng.rds")
+cng <- read_RDS("data/cng.rds")
 
 library(dplyr)
 
@@ -74,7 +138,7 @@ nms <- rvest::html_table(xml2::read_html("https://www.fec.gov/campaign-finance-d
 
 nms <- paste(tolower(nms[[1]][[1]][-1]), collapse = "\t")
 
-w <- readr::read_lines("/Users/mwk/R/congress_tweets/data/weball18.txt")
+w <- readr::read_lines("data/weball18.txt")
 w <- gsub("\\|", "\t", w)
 
 tmp <- tempfile()
@@ -121,9 +185,19 @@ i <- match(gsub("\\W", "", tolower(cng$full_name)), gsub("\\W", "", tolower(w$fu
 
 names(w)
 
+
+w <- w %>%
+  mutate(party = case_when(
+    grepl("Rep", cand_pty_affiliation, ignore.case = TRUE) ~ "R",
+    grepl("dem", cand_pty_affiliation, ignore.case = TRUE) ~ "D",
+    TRUE ~ "I"
+  ))
+
+w$cand_pty_affiliation
+
 cng$ttl_disb <- w$ttl_disb[i]
 cng$ttl_receipts <- w$ttl_receipts[i]
-cng$cand_pty_affiliation <- w$party[i]
+#cng$cand_pty_affiliation <- w$party[i]
 cng$ttl_indiv_contrib <- w$ttl_indiv_contrib[i]
 
 group_by(cng, party) %>%
@@ -141,11 +215,8 @@ nrow(cng)
 
 length(w$ttl_disb)
 
-w <- w %>%
-	mutate(party = case_when(
-		grepl("Rep", cand_pty_affiliation, ignore.case = TRUE) ~ "R",
-		grepl("dem", cand_pty_affiliation, ignore.case = TRUE) ~ "D",
-		TRUE ~ "I"
-	))
 
+select(results, full_name = name_display, percent, nyt_rating, dem_forecast, gop_forecast, third_forecast)
+
+match(cng$full_name, results$name_display)
 
