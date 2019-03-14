@@ -20,6 +20,7 @@ library(dplyr)
 
 cng <- dplyr::bind_rows(h14, h15, s14, s15)
 
+
 library(tfse)
 save_RDS(cng, "data/congress-114-115.rds")
 
