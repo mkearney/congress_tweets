@@ -1,6 +1,6 @@
 library(dplyr)
 
-r <- readRDS("data/results.rds")
+r <- readRDS("~/R/congress_tweets/data/results.rds")
 
 any_dup <- function(x) duplicated(x) | duplicated(x, fromLast = TRUE)
 
@@ -14,7 +14,7 @@ r <- filter(r, race_type != "governor")
 #cng <- readRDS("data/congress-114-115.rds")
 #list.files("data", pattern = "^c")
 
-cng <- readRDS("data/cng-data.rds")
+cng <- readRDS("~/Dropbox/cng-data.rds")
 
 sum(duplicated(cng$full_name))
 
@@ -179,6 +179,11 @@ b <- bind_cols(select(d, user_id, status_id, screen_name, name, location),
 	select_if(d, ~ (is.numeric(.) | is.logical(.)) & !all(is.na(.))))
 
 
+
+b$full_name2 <- cng$full_name[match(tolower(b$name), tolower(cng$full_name))]
+
+
+
 b$full_name <- cng$full_name[match(tolower(b$screen_name), tolower(cng$twitter_account))]
 #b <- filter(b, !is.na(full_name))
 b <- left_join(b, cng)
@@ -203,7 +208,44 @@ b <- b %>%
 	#mutate(party = factor(party, levels = c("republican", "democrat", "third"))) %>%
 
 
-saveRDS(s, "~/Dropbox/s.rds")
+
+
+library(tfse)
+library(dplyr)
+
+b <- fst::read_fst("~/Dropbox/d.fst")
+s <- readRDS("~/Dropbox/s.rds")
+b <- readRDS("~/Dropbox/b.rds")
+
+s
+
+
+bre <- paste0("\\b", substr(tolower(cng$first_name), 1, 3),
+	".*\\b", tolower(cng$last_name), "\\b")
+bre <- unique(bre)
+length(bre)
+
+bn <- unique(b$name)
+un <- b$user_id[!duplicated(b$name)]
+length(bn)
+
+purrr::map(bre, ~ {
+	tibble::tibble(bre = bre, user_id = un[grep(.x, bn, ignore.case = TRUE)])
+})
+
+b$full_name2 <- s$full_name[match(tolower(b$name), tolower(s$full_name))]
+
+fn <- substr(sub(" .*", "", s$full_name), 1, 4)
+
+substr(tolower(fn), 1, 4)
+
+
+
+with(b, !is.na(full_name) & !is.na(full_name2) & full_name != full_name2)
+
+
+sum(!is.na(match(tolower(b$name), tolower(s$full_name))))
+
 
 s <- b %>%
 	group_by(user_id) %>%
