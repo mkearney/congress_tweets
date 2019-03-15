@@ -39,18 +39,18 @@ cng %>%
 
 
 paste_fml <- function(f, m, l) {
-  m <- ifelse(is.na(m), "", paste0(m, " "))
+  m <- ifelse(is.na(m), " ", paste0(" ", m, " "))
   f[is.na(f)] <- ""
   l[is.na(l)] <- ""
-  fml <- paste0(f, " ", m, l)
-  fml[fml == " "] <- NA_character_
+  fml <- paste0(f, m, l)
+  fml[grepl("^\\s{0,}$", fml)] <- NA_character_
   fml
 }
 
 
 cng$full_name <- paste_fml(cng$first_name, cng$middle_name, cng$last_name)
 
-save_RDS(cng, "data/cng-data.rds")
+tfse::save_RDS(cng, "data/cng-data.rds")
 
 
 name_chars <- function(x) {
