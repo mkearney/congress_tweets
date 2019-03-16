@@ -14,7 +14,7 @@ r <- filter(r, race_type != "governor")
 #cng <- readRDS("data/congress-114-115.rds")
 #list.files("data", pattern = "^c")
 
-cng <- readRDS("~/Dropbox/cng-data.rds")
+cng <- readRDS("data/cng-data.rds")
 
 sum(duplicated(cng$full_name))
 
@@ -213,7 +213,7 @@ b <- b %>%
 library(tfse)
 library(dplyr)
 
-b <- fst::read_fst("~/Dropbox/d.fst")
+d <- fst::read_fst("~/Dropbox/d.fst")
 s <- readRDS("~/Dropbox/s.rds")
 b <- readRDS("~/Dropbox/b.rds")
 
@@ -222,30 +222,34 @@ s
 
 bre <- paste0("\\b", substr(tolower(cng$first_name), 1, 3),
 	".*\\b", tolower(cng$last_name), "\\b")
-bre <- unique(bre)
+ii <- !duplicated(bre)
+bre <- bre[ii]
+fn <- cng$full_name[ii]
 length(bre)
 
 bn <- unique(b$name)
-un <- b$user_id[!duplicated(b$name)]
+un <- unique(b$user_id)
 length(bn)
 
-purrr::map(bre, ~ {
-	tibble::tibble(bre = bre, user_id = un[grep(.x, bn, ignore.case = TRUE)])
+
+nn <- purrr::map(seq_len(length(bre)), ~ {
+	tibble::tibble(full_name = fn[.x],
+	  user_id = un[grep(bre[.x], bn, ignore.case = TRUE)])
 })
 
-b$full_name2 <- s$full_name[match(tolower(b$name), tolower(s$full_name))]
+nn <- unique(dplyr::bind_rows(nn))
+
+
+b$full_name2 <- nn$full_name[match(b$user_id, nn$user_id)]
+
+b <- mutate(b, full_name =ifelse(is.na(full_name), full_name2, full_name))
 
 fn <- substr(sub(" .*", "", s$full_name), 1, 4)
+b$full_name2 <- NULL
+saveRDS(b, "~/Box Sync/midterm18_twitter/final-full-data.rds")
 
-substr(tolower(fn), 1, 4)
-
-
-
-with(b, !is.na(full_name) & !is.na(full_name2) & full_name != full_name2)
-
-
-sum(!is.na(match(tolower(b$name), tolower(s$full_name))))
-
+filter(b, !is.na(full_name)) %>%
+  readr::write_csv("~/Box Sync/midterm18_twitter/final-full-data.csv")
 
 s <- b %>%
 	group_by(user_id) %>%
@@ -284,8 +288,17 @@ s <- b %>%
 	) %>%
 	ungroup()
 
+mean1 <- function(x) {
+  if (!is.numeric(x)) {
+    return(x[1])
+  }
+  mean(x, na.rm = TRUE)
+}
 
-options(width = 80)
+s %>%
+  filter(!is.na(fcast)) %>%
+  group_by(full_name) %>%
+  summarise_all(mean1) ->s
 
 nnms <- function(s) substr(sub("\\S{4,}.*_", "",
 	sub("_count", "", names(s))), 1, 9)
@@ -354,28 +367,34 @@ s %>%
 	geom_boxplot()
 
 range(s$over_perf, na.rm = TRUE)
+is_t <- function(x) !is.na(x) & x
 
 s %>%
-	filter(abs(over_perf) < .5, percent > 0) %>%
+	filter(abs(over_perf) < .2) %>%
 	mutate(incumbent = is_t(incumbent),
 		has_incumbent = is_t(has_incumbent)) %>%
 	group_by(incumbent) %>%
 	summarise(over_perf = mean(over_perf, na.rm = TRUE))
 with(s, cor(over_perf, as.integer(incumbent)))
 
-is_t <- function(x) !is.na(x) & x
 
-s %>%
-	filter(abs(over_perf) < .45) %>%
+s <- s %>%
+	filter(abs(over_perf) < .25) %>%
 	mutate(incumbent = is_t(incumbent),
 		has_incumbent = is_t(has_incumbent)) %>%
-	filter(party != "I", percent> 0) %>%
-	select(-c(friends_count:listed_count,
-		ext_media_count, tweet_length,
-		user_id, percent, rating, nyt_rating, state, full_name, fcast)) %>%
+	filter(party != "I")
+
+s %>%
+  select(-c(#friends_count:listed_count,
+		#tweet_length,
+	  ext_media_count, user_id, percent, rating, nyt_rating, state, full_name, fcast)) %>%
 	mutate(over_perf = over_perf*100) %>%
+#  mutate_if(should_log, log10)%>%
 	lm(over_perf ~ . + migrant_caravan*party +
 		health_care*party + me_too*party, data = .) -> regmod
+
+
+readr::write_csv(s, "data/final-summary-data.csv")
 
 summary(regmod)
 
