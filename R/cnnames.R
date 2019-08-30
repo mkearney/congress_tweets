@@ -11,9 +11,6 @@ r <- filter(r, !first_name == "" & !last_name == "",
 
 r <- filter(r, race_type != "governor")
 
-#cng <- readRDS("data/congress-114-115.rds")
-#list.files("data", pattern = "^c")
-
 cng <- readRDS("data/cng-data.rds")
 
 sum(duplicated(cng$full_name))
@@ -40,10 +37,6 @@ r <- r %>%
   mutate(first_last = paste_fl(first_name, last_name),
     first_last2 = paste_fl(sub(" .*", "", first_name), last_name))
 
-r$first_last
-
-names(cng)
-
 cng %>%
   transmute(first_last = paste_fl(first_name, last_name),
     m1 = match(tolower(full_name), tolower(r$name_display)),
@@ -58,7 +51,6 @@ cng %>%
     m = ifelse(is.na(m), m5, m),
     m = ifelse(is.na(m), m6, m)) %>%
   pull(m) -> m
-
 
 na <- filter(cng, is.na(m)) %>% select(full_name, state, chamber, district) %>%
 	mutate(f = paste0(state, chamber, district))
@@ -83,12 +75,6 @@ r[grep(paste(ln, collapse = "|"), r$last_name), ] %>%
 r$name_display[match(rm$name_display,
 	r$name_display)] <- cng$full_name[match(rm$full_name, cng$full_name)]
 
-
-
-
-
-
-
 cng %>%
   transmute(first_last = paste_fl(first_name, last_name),
     m1 = match(tolower(full_name), tolower(r$name_display)),
@@ -103,10 +89,6 @@ cng %>%
     m = ifelse(is.na(m), m5, m),
     m = ifelse(is.na(m), m6, m)) %>%
   pull(m) -> m
-
-
-
-
 
 rb <- r[tfse::na_omit(m), ] %>%
 	select(race_id:candidate_key, party_id:percent, nyt_rating:third_forecast)

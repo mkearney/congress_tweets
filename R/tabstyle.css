@@ -1,0 +1,40 @@
+<html>
+<body>
+
+<style>
+table>thead>tr>th {
+border-bottom: 0px solid #444;
+}
+/*table>thead>tr>th:nth-child(1) {
+width: 70%;
+}
+table>thead>tr>th:nth-child(2) {
+width: 15%;
+}
+table>thead>tr>th:nth-child(3) {
+width: 15%;
+}
+*/
+/*tbody tr:nth-child(n+1):nth-last-child(n+2) td:nth-child(1) {
+  font-size: 85%;
+  padding-left: 1em !important;
+}
+*/table>td,table>th {
+  border-top: 1px solid #eee;
+}
+tbody tr:nth-last-child(1) td {
+  font-weight: bold;
+  border-top: 1px solid #444;
+  border-bottom: 0px solid #444;
+}
+table{width:100%;max-width:600px;margin:auto;}
+/*table>tbody>tr>td, table>tbody>tr>th, table>tfoot>tr>td, table>tfoot>tr>th, table>thead>tr>td, table>thead>tr>th  {
+vertical-align: middle;
+}
+*/
+</style>
+
+{{TABLE}}
+
+</body>
+</html>
