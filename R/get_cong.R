@@ -16,6 +16,36 @@ s14 <- get_cong_data(114, "senate")
 h15 <- get_cong_data(115, "house")
 s15 <- get_cong_data(115, "senate")
 
+h16 <- get_cong_data(116, "house")
+s16 <- get_cong_data(116, "senate")
+
+
+
+hs <- dplyr::bind_rows(h16, s16)
+hs
+
+tfse::yin(names(dw), names(hs))
+hs$bi
+library(dplyr)
+dplyr::left_join(dw, dplyr::select(hs, -congress, -chamber) %>% dplyr::rename(bioguide_id = id)) ->
+  d
+
+readr::write_csv(d, "~/Dropbox/hscng.csv", na = "")
+d$fec_candidate_id
+nrow(dw)
+nrow(hs)
+
+match(dw$bioguide_id, hs$id)
+
+tfse::nin(names(h16), names(s16))
+tfse::nin(names(s16), names(h16))
+hs
+dw <- readr::read_csv("https://voteview.com/static/data/out/members/HS116_members.csv")
+dw
+with(dw, table(party_code, state_abbrev))
+
+## Lewis, Jeffrey B., Keith Poole, Howard Rosenthal, Adam Boche, Aaron Rudkin, and Luke Sonnet (2019). Voteview: Congressional Roll-Call Votes Database. https://voteview.com/
+
 library(dplyr)
 
 cng <- dplyr::bind_rows(h14, h15, s14, s15)
